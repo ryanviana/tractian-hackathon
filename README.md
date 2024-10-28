@@ -1,8 +1,12 @@
 # Jornadas - TracBOT
 
-## Conheça nosso projeto! 
+## Conheça nosso projeto! 📄
 
-**[Visite meu projeto](https://github.com/usuario/projeto)**
+**[Apresentação do projeto!](https://github.com/usuario/projeto)**
+
+## Teste você mesmo! 💻
+
+**[Aplicação deployada na AWS + Streamlit](https://tracbot-jornadas.streamlit.app/)**
 
 ## Como rodar localmente?
 
