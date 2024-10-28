@@ -8,7 +8,7 @@
 
 ## Veja um exemplo de aplicação
 
-**[Link para exemplo!](https://github.com/ryanviana/tractian-hackathon/blob/main/Video.mp4)**
+**[Link para exemplo!](https://youtu.be/H_HAxrsfbDs)**
 
 ## Teste você mesmo! 💻
 
