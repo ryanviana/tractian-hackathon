@@ -1,4 +1,4 @@
-# Jornadas - TracBOT
+# Jornadas - TracBOT 💻
 
 ## Conheça nosso projeto! 📄
 
