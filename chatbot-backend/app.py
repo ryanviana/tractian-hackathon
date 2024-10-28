@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from datetime import date
 from collections import defaultdict
 import uuid
+import dateparser  # Import dateparser library
 
 load_dotenv()
 
@@ -58,36 +59,60 @@ def consulta():
         conversation_history = conversation_store[conversation_id]
 
         print("Starting piece extraction...")
-        piece_descriptions, conversation_history = extract_pieces(
+        piece_descriptions, date_str, conversation_history = extract_pieces(
             prompt, conversation_history
         )
         print("Piece descriptions:", piece_descriptions)
+        print("Extracted date string:", date_str)
 
         # Update the conversation store
         conversation_store[conversation_id] = conversation_history
 
-        if not piece_descriptions:
-            return jsonify({"message": "Nenhuma peça identificada no prompt."}), 200
+        if not piece_descriptions and not date_str:
+            return (
+                jsonify({"message": "Nenhuma peça ou data identificada no prompt."}),
+                200,
+            )
 
         print("Getting piece info...")
-        pieces_info = get_pieces_info(piece_descriptions)
+        if not piece_descriptions:
+            # If no new pieces are mentioned, use the last known pieces
+            # Retrieve from conversation history
+            for message in reversed(conversation_history):
+                if message["role"] == "assistant":
+                    match = re.search(r"\{.*\}", message["content"], re.DOTALL)
+                    if match:
+                        json_obj_str = match.group(0)
+                        json_obj_str = re.sub(r"\s+", " ", json_obj_str)
+                        data = json.loads(json_obj_str)
+                        piece_descriptions = data.get("pieces", [])
+                        break
+            print("Using previous piece descriptions:", piece_descriptions)
+
+        pieces_info, matched_descriptions = get_pieces_info(piece_descriptions)
         print("Pieces info:", pieces_info)
 
         # Find pieces not found in the database
-        found_descriptions = [piece["descricao"] for piece in pieces_info]
-        unmatched_pieces = list(set(piece_descriptions) - set(found_descriptions))
+        unmatched_pieces = list(set(piece_descriptions) - set(matched_descriptions))
         print("Unmatched pieces:", unmatched_pieces)
 
         saps = [piece["sap"] for piece in pieces_info]
 
         print("Checking availability...")
-        common_hours = get_common_availability(saps)
+        # Parse the date string into a datetime.date object
+        if date_str:
+            parsed_date = dateparser.parse(date_str).date()
+        else:
+            parsed_date = date.today()
+
+        common_hours = get_common_availability(saps, target_date=parsed_date)
         print("Common hours:", common_hours)
 
         response = {
             "found_pieces": pieces_info,
             "unmatched_pieces": unmatched_pieces,
             "common_hours": common_hours,
+            "date": parsed_date.isoformat(),
         }
         return jsonify(response), 200
 
@@ -105,10 +130,10 @@ def extract_pieces(prompt, conversation_history):
             {
                 "role": "system",
                 "content": (
-                    "Você é um assistente que ajuda a identificar peças mencionadas em um texto. "
+                    "Você é um assistente que ajuda a identificar peças e datas mencionadas em um texto. "
                     "Mantenha o contexto da conversa ao interpretar o pedido do usuário. "
-                    "Retorne apenas uma lista de peças em formato JSON válido, sem texto adicional. "
-                    'Exemplo: ["peça1", "peça2"]'
+                    "Retorne apenas um JSON válido com as peças e a data, sem texto adicional. "
+                    'Exemplo: {"pieces": ["peça1", "peça2"], "date": "2024-10-29"}'
                 ),
             },
             # Include previous messages
@@ -129,31 +154,33 @@ def extract_pieces(prompt, conversation_history):
         conversation_history.append({"role": "user", "content": prompt})
         conversation_history.append({"role": "assistant", "content": assistant_message})
 
-        # Extract JSON array from the assistant's response
-        match = re.search(r"\[.*\]", assistant_message, re.DOTALL)
+        # Extract JSON object from the assistant's response
+        match = re.search(r"\{.*\}", assistant_message, re.DOTALL)
         if match:
-            json_array_str = match.group(0)
-            print("Extracted JSON array string:", json_array_str)
+            json_obj_str = match.group(0)
+            print("Extracted JSON object string:", json_obj_str)
             # Remove any whitespace and line breaks to ensure valid JSON
-            json_array_str = re.sub(r"\s+", " ", json_array_str)
-            pieces_list = json.loads(json_array_str)
-            print("Parsed pieces list:", pieces_list)
-            return pieces_list, conversation_history
+            json_obj_str = re.sub(r"\s+", " ", json_obj_str)
+            data = json.loads(json_obj_str)
+            print("Parsed data:", data)
+            pieces_list = data.get("pieces", [])
+            date_str = data.get("date", None)
+            return pieces_list, date_str, conversation_history
         else:
-            print("No JSON array found in the assistant's response.")
-            return [], conversation_history
+            print("No JSON object found in the assistant's response.")
+            return [], None, conversation_history
 
     except json.JSONDecodeError as e:
         print("JSONDecodeError:", e)
         print("Assistant's response caused JSONDecodeError:", assistant_message)
-        return [], conversation_history
+        return [], None, conversation_history
 
     except Exception as e:
         print("Error in extract_pieces:", e)
         import traceback
 
         traceback.print_exc()
-        return [], conversation_history
+        return [], None, conversation_history
 
 
 def get_pieces_info(descriptions):
@@ -161,10 +188,11 @@ def get_pieces_info(descriptions):
         conn = get_db_connection()
         cur = conn.cursor()
 
-        # Set similarity threshold if desired
-        # cur.execute("SELECT set_limit(0.4);")  # Optional: set the similarity threshold globally
+        # Set similarity threshold
+        similarity_threshold = 0.75
 
         pieces = []
+        matched_descriptions = []
 
         for desc in descriptions:
             normalized_desc = desc.upper()
@@ -172,28 +200,29 @@ def get_pieces_info(descriptions):
                 SELECT sap, categoria, descricao,
                        similarity(unaccent(UPPER(descricao)), unaccent(%s)) AS sim_score
                 FROM pieces
-                WHERE similarity(unaccent(UPPER(descricao)), unaccent(%s)) >= 0.4
+                WHERE similarity(unaccent(UPPER(descricao)), unaccent(%s)) >= %s
                 ORDER BY sim_score DESC
                 LIMIT 1;
             """
-            cur.execute(sql, (normalized_desc, normalized_desc))
+            cur.execute(sql, (normalized_desc, normalized_desc, similarity_threshold))
             row = cur.fetchone()
             if row:
                 pieces.append({"sap": row[0], "categoria": row[1], "descricao": row[2]})
+                matched_descriptions.append(desc)
             else:
                 print(f"No match found for '{desc}'")
 
         cur.close()
         conn.close()
 
-        return pieces
+        return pieces, matched_descriptions
 
     except Exception as e:
         print("Error in get_pieces_info:", e)
         import traceback
 
         traceback.print_exc()
-        return []
+        return [], []
 
 
 def get_common_availability(saps, target_date=None):
