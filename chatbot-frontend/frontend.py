@@ -10,53 +10,19 @@ load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
 
-# Set up custom CSS for styling
+st.image("images/tractian_logo.png", width=150)
+
+# Title and app layout
+st.title("Chatbot Tractian")
+
+# Markdown text for simple explanation of how to use (text in portuguese)
 st.markdown(
-    f"""
-    <style>
-    /* Background and text colors */
-    .main {{ background-color: #f2f5f9; }}
-    .stMarkdown h1 {{ color: #3662e3; }}
-
-    /* Button styling */
-    div.stButton > button {{
-        background-color: #4b7ded;
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 0.25rem;
-        transition: background-color 0.3s ease;
-    }}
-    div.stButton > button:hover {{
-        background-color: #5791ff;
-    }}
-
-    /* Chat message bubbles */
-    .st-chat-message-user {{ background-color: #4b7ded; color: white; }}
-    .st-chat-message-assistant {{ background-color: #3662e3; color: white; }}
-
-    /* Aligning the Tractian logo */
-    .logo-container {{
-        display: flex;
-        justify-content: center;
-        margin-bottom: 2rem;
-    }}
-    .logo-container img {{
-        max-width: 150px;
-    }}
-    </style>
+    """
+    Este é um chatbot que utiliza a API de linguagem natural da OpenAI para responder perguntas. 
+    Você pode conversar com ele e fazer perguntas sobre a Tractian, nossa plataforma e como podemos te ajudar.
     """,
     unsafe_allow_html=True
 )
-
-# Display the Tractian logo at the top
-st.markdown(
-    '<div class="logo-container"><img src="tractian_logo.png" alt="Tractian Logo"></div>',
-    unsafe_allow_html=True
-)
-
-# Title and app layout
-st.title("ChatGPT-like clone")
 
 if "openai_model" not in st.session_state:
     st.session_state["openai_model"] = "gpt-3.5-turbo"
