@@ -6,7 +6,7 @@
 
 ## Teste você mesmo! 💻
 
-**[Aplicação deployada na AWS + Streamlit](https://tracbot-jornadas.streamlit.app/)**
+**[Link da aplicação (Deploy com AWS + Streamlit)](https://tracbot-jornadas.streamlit.app/)**
 
 ## Como rodar localmente?
 
