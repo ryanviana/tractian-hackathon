@@ -53,8 +53,7 @@ streamlit run frontend.py
 
 6. Acesse o front-end no navegador através do link fornecido no terminal, geralmente http://localhost:8501.
 
+```
 git clone https://github.com/ryanviana/tractian-hackathon.git>
 cd chatbot-backend
 ```
-
-2. 
