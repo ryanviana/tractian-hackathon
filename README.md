@@ -6,7 +6,7 @@
 
 **[Apresentação do projeto!](https://github.com/usuario/projeto)**
 
-## Veja um exemplo de aplicação
+## Veja um exemplo de aplicação 💡
 
 **[Link para exemplo!](https://youtu.be/H_HAxrsfbDs)**
 
