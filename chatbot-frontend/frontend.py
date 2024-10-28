@@ -13,7 +13,7 @@ load_dotenv()
 tractian_blue = "#3662e3"
 
 # Custom HTML to set the favicon and title
-favicon_path = "./images/logo_redonda.txt"  # Path to your favicon Base64 text file
+favicon_path = os.path.join(os.path.dirname(__file__), "images/logo_redonda.txt")
 page_title = "TracBOT"  # Title to be displayed on the browser tab
 
 
@@ -25,7 +25,10 @@ def load_base64_image(txt_path):
 
 # Load base64 images
 favicon_base64 = load_base64_image(favicon_path)
-logo_base64 = load_base64_image("./images/tractian_logo_name.txt")
+logo_base64 = load_base64_image(
+    os.path.join(os.path.dirname(__file__), "images/tractian_logo_name.txt")
+)
+
 
 # Set page configuration with base64 favicon
 st.set_page_config(
