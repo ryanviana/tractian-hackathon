@@ -2,14 +2,21 @@
 
 ## Como rodar localmente?
 
+### Back-end
+
+1. Clone o repositório se ainda não clonou e navegue até a pasta do projeto:
+```
+git clone https://github.com/ryanviana/tractian-hackathon.git>
+cd chatbot-backend
+```
+
 ### Front-end
 
 Siga os passos abaixo para rodar o front-end do projeto usando Streamlit:
 
-1. Clone o repositório e navegue até a pasta do projeto:
+1. Navegue até a pasta do projeto:
 
 ```
-git clone https://github.com/ryanviana/tractian-hackathon.git>
 cd chatbot-frontend
 ```
 
@@ -46,11 +53,6 @@ streamlit run frontend.py
 
 6. Acesse o front-end no navegador através do link fornecido no terminal, geralmente http://localhost:8501.
 
-### Back-end
-
-1. Clone o repositório se ainda não clonou e navegue até a pasta do projeto:
-
-```
 git clone https://github.com/ryanviana/tractian-hackathon.git>
 cd chatbot-backend
 ```
