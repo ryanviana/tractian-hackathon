@@ -3,3 +3,6 @@ psycopg2-binary
 openai
 python-dotenv
 dateparser
+numpy 
+faiss-cpu
+PyPDF2

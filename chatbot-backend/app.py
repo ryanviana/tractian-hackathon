@@ -7,8 +7,10 @@ from openai import OpenAI
 from dotenv import load_dotenv
 from datetime import date
 from collections import defaultdict
-import uuid
-import dateparser  # Import dateparser library
+import dateparser
+import numpy as np
+import faiss
+import PyPDF2
 
 load_dotenv()
 
@@ -43,8 +45,52 @@ def get_db_connection():
     return conn
 
 
+@app.route("/main", methods=["POST"])
+def consulta_or_manual():
+    data = request.get_json()
+    prompt = data.get("prompt", "")
+    conversation_id = data.get("conversation_id", None)
+    if not prompt:
+        return jsonify({"error": "Prompt não fornecido."}), 400
+    if not conversation_id:
+        return jsonify({"error": "conversation_id não fornecido."}), 400
+
+    # Determine if the request is a manual-related query or a parts-related query
+    if is_manual_query(prompt):
+        return consulta_manual(prompt, conversation_id)
+    else:
+        return consulta(prompt, conversation_id)
+
+
+def is_manual_query(prompt):
+    # Basic keyword check to see if the prompt is related to the manual
+    manual_keywords = ["manual", "guide", "instruction"]
+    return any(keyword in prompt.lower() for keyword in manual_keywords)
+
+
+def consulta_manual(prompt, conversation_id):
+    try:
+
+        answer = answer_question(prompt, index, embeddings)
+
+        # Save the prompt and answer to conversation history
+        conversation_store[conversation_id].append({"role": "user", "content": prompt})
+        conversation_store[conversation_id].append(
+            {"role": "assistant", "content": answer}
+        )
+
+        return jsonify({"answer": answer}), 200
+
+    except Exception as e:
+        print("Detailed error in /main route:", e)
+        import traceback
+
+        traceback.print_exc()
+        return jsonify({"error": f"Erro ao processar a consulta: {str(e)}"}), 500
+
+
 @app.route("/consulta", methods=["POST"])
-def consulta():
+def consulta(prompt, conversation_id):
     data = request.get_json()
     prompt = data.get("prompt", "")
     conversation_id = data.get("conversation_id", None)
@@ -264,6 +310,74 @@ def get_common_availability(saps, target_date=None):
         traceback.print_exc()
         return []
 
+
+def extract_text_from_pdf(pdf_path):
+    chunks = []
+    with open(pdf_path, "rb") as file:
+        reader = PyPDF2.PdfReader(file)
+        for page_num, page in enumerate(reader.pages):
+            text = page.extract_text()
+            if text:
+                chunks.append({"text": text, "page": page_num + 1})
+    return chunks
+
+
+def create_embeddings(chunks):
+    embeddings = []
+    for chunk in chunks:
+        response = client.embeddings.create(
+            input=chunk["text"], model="text-embedding-ada-002"
+        )
+        embedding = response.data[0].embedding
+        embeddings.append(
+            {"embedding": embedding, "text": chunk["text"], "page": chunk["page"]}
+        )
+    return embeddings
+
+
+def store_embeddings(embeddings):
+    dimension = len(embeddings[0]["embedding"])
+    index = faiss.IndexFlatL2(dimension)
+    vectors = np.array([e["embedding"] for e in embeddings]).astype("float32")
+    index.add(vectors)
+    return index
+
+
+def answer_question(question, index, embeddings, k=3):
+    response = client.embeddings.create(input=question, model="text-embedding-ada-002")
+    question_embedding = np.array(response.data[0].embedding).astype("float32")
+
+    distances, indices = index.search(np.array([question_embedding]), k)
+    relevant_chunks = [embeddings[i] for i in indices[0]]
+
+    context = "\n\n".join(
+        [f"Página {chunk['page']}: {chunk['text']}" for chunk in relevant_chunks]
+    )
+
+    messages = [
+        {
+            "role": "system",
+            "content": "Você é um assistente que responde perguntas com base no seguinte manual.",
+        },
+        {"role": "system", "content": context},
+        {"role": "user", "content": question},
+    ]
+
+    response = client.chat.completions.create(
+        model="gpt-4", messages=messages, temperature=0
+    )
+
+    answer = response.choices[0].message.content.strip()
+    pages = [str(chunk["page"]) for chunk in relevant_chunks]
+    answer += f"\n\nReferências: Páginas {', '.join(pages)} do manual."
+    return answer
+
+
+# Load and process the manual PDF
+pdf_path = "manual.pdf"
+chunks = extract_text_from_pdf(pdf_path)
+embeddings = create_embeddings(chunks)
+index = store_embeddings(embeddings)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5001)), debug=True)
