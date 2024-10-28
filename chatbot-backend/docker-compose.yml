@@ -1,5 +1,3 @@
-# docker-compose.yml
-
 version: "3.8"
 
 services:
@@ -18,14 +16,16 @@ services:
   app:
     build: .
     environment:
+      PYTHONUNBUFFERED: 1  # Force unbuffered output
       DB_HOST: db
       DB_PORT: 5432
-      DB_NAME: posgres
+      DB_NAME: postgres
       DB_USER: admin
       DB_PASSWORD: admin
-      OPENAI_API_KEY: ${OPENAI_API_KEY}  
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      PORT: 5001  # Port environment variable for Flask
     ports:
-      - "5000:5000"
+      - "5001:5001"
     depends_on:
       - db
 

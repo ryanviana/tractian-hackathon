@@ -12,8 +12,8 @@ COPY . .
 # Install required packages
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose port 5000 for the Flask app
-EXPOSE 5000
+# Expose port 5001
+EXPOSE 5001
 
-# Run the Flask app
-CMD ["python", "app.py"]
+# Run the Flask app with unbuffered output on the specified port
+CMD ["python", "-u", "app.py"]

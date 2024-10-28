@@ -1,5 +1,9 @@
 -- db.sql
 
+-- Enable unaccent and pg_trgm extensions
+CREATE EXTENSION IF NOT EXISTS unaccent;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 CREATE TABLE IF NOT EXISTS pieces (
   sap VARCHAR PRIMARY KEY,
   categoria VARCHAR NOT NULL,
