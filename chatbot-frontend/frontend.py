@@ -69,15 +69,24 @@ if prompt := st.chat_input("Qual sua dúvida?"):
     }
 
     # Send request to the backend
-    response = requests.post("http://localhost:5001/consulta", json=payload)
+    response = requests.post("http://ec2-15-228-54-226.sa-east-1.compute.amazonaws.com:5001/main", json=payload)
 
     if response.status_code == 200:
         # Parse the response JSON
         response_data = response.json()
 
-        # Check if all expected keys are present
-        if all(key in response_data for key in ["date", "common_hours", "found_pieces", "unmatched_pieces"]):
-            # Format the response
+        # Check if response contains an "answer" key (direct answer format)
+        if "answer" in response_data:
+            # Display the direct answer in the conversation
+            with st.chat_message("assistant"):
+                st.markdown(response_data["answer"])
+
+            # Save the direct answer to session
+            st.session_state.messages.append({"role": "assistant", "content": response_data["answer"]})
+
+        # Otherwise, check if it contains the structured format
+        elif all(key in response_data for key in ["date", "common_hours", "found_pieces", "unmatched_pieces"]):
+            # Format the structured response
             response_content = f"**Data**: {response_data['date']}<br>"
 
             # Format common hours with "am" or "pm"
@@ -105,11 +114,11 @@ if prompt := st.chat_input("Qual sua dúvida?"):
             else:
                 response_content += "**Ferramentas não encontradas**: Todas as ferramentas foram encontradas!<br>"
 
-            # Display the formatted response
+            # Display the formatted structured response
             with st.chat_message("assistant"):
                 st.markdown(response_content, unsafe_allow_html=True)
 
-            # Save formatted response to session
+            # Save formatted structured response to session
             st.session_state.messages.append({"role": "assistant", "content": response_content})
 
         else:
