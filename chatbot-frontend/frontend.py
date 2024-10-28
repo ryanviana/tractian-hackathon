@@ -3,6 +3,7 @@ import uuid
 import streamlit as st
 from dotenv import load_dotenv
 import os
+import streamlit.components.v1 as components
 
 # Load environment variables from .env file
 load_dotenv()
@@ -10,17 +11,38 @@ load_dotenv()
 # Set Tractian blue color
 tractian_blue = "#3662e3"
 
+# Custom HTML to set the favicon and title
+favicon_path = "images/logo_redonda.png"  # Path to your favicon image
+page_title = "TracBOT"  # Title to be displayed on the browser tab
+
+st.set_page_config(page_title=page_title, page_icon=favicon_path)
+
+# Inject custom HTML to set favicon and title in the browser
+components.html(
+    f"""
+    <script>
+        document.title = "{page_title}";
+        var link = document.createElement("link");
+        link.rel = "icon";
+        link.href = "{favicon_path}";
+        document.head.appendChild(link);
+    </script>
+    """,
+    height=0
+)
+
 st.image("images/tractian_logo_name.png", width=120)
 
 # Title and app layout
-st.title("Chatbot Tractian")
+st.title("TracBOT")
 
 # Introduction text
 st.markdown(
     f"""
     <p>
-    Este é um chatbot que utiliza uma API para responder perguntas sobre a Tractian, nossa plataforma e como podemos te ajudar.
+    Este é um chatbot que utiliza uma API para responder perguntas sobre a disponibilidade de ferramentas para manutenção e informações referentes ao manual.
     </p>
+    <p><strong>Importante: Se você quer fazer alguma pergunta referente ao manual, comece o prompt com "No manual" para garantir uma pesquisa mais precisa!</strong></p>
     """,
     unsafe_allow_html=True
 )
