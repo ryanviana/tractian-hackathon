@@ -4,7 +4,7 @@
 
 ## Conheça nosso projeto! 📄
 
-**[Apresentação do projeto!](https://github.com/usuario/projeto)**
+**[Apresentação do projeto!](https://www.canva.com/design/DAGU3aEBo6M/-Y8npYDt8BCnziGHy9JUZQ/view?utm_content=DAGU3aEBo6M&utm_campaign=designshare&utm_medium=link&utm_source=editor)**
 
 ## Veja um exemplo de aplicação 💡
 
