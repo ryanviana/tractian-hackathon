@@ -31,7 +31,7 @@ components.html(
     height=0
 )
 
-st.image("images/tractian_logo_name.png", width=120)
+st.image("images/logo_redonda.png", width=120)
 
 # Title and app layout
 st.title("TracBOT")
