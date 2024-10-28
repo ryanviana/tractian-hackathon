@@ -1,5 +1,9 @@
 # Jornadas - TracBOT
 
+## Conheça nosso projeto! 
+
+**[Visite meu projeto](https://github.com/usuario/projeto)**
+
 ## Como rodar localmente?
 
 ### Back-end
